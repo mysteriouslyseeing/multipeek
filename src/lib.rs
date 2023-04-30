@@ -433,6 +433,34 @@ where
         self.buf.pop_front().or_else(|| self.iter.next())
     }
 
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        match n.checked_sub(self.buf.len()) {
+            Some(remainder) => {
+                self.buf.clear();
+                self.iter.nth(remainder)
+            },
+            None => {
+                self.buf.drain(0..n).for_each(drop);
+                self.buf.pop_front()
+            }
+        }
+    }
+
+    fn last(mut self) -> Option<Self::Item>
+        where
+            Self: Sized, {
+        match self.iter.last() {
+            v @ Some(_) => v,
+            None => { self.buf.pop_back() }
+        }
+    }
+
+    fn count(self) -> usize
+        where
+            Self: Sized, {
+        self.buf.len() + self.iter.count()
+    }
+
     fn size_hint(&self) -> (usize, Option<usize>) {
         let (mut low, mut high) = self.iter.size_hint();
         low = low.saturating_add(self.buf.len());
